@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 220 13% 91%;
+    
+    --card: 240 21% 15%;
+    --card-foreground: 220 13% 91%;
+    
+    --popover: 240 21% 15%;
+    --popover-foreground: 220 13% 91%;
+    
+    --primary: 168 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    
+    --secondary: 240 5% 64%;
+    --secondary-foreground: 0 0% 0%;
+    
+    --muted: 240 5% 64%;
+    --muted-foreground: 240 5% 64%;
+    
+    --accent: 199 84% 55%;
+    --accent-foreground: 0 0% 0%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 168 100% 50%;
+    
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-space-grotesk;
+    background-image: radial-gradient(circle at center, hsl(var(--background)), hsl(var(--background)) 80%);
+  }
+
+  section {
+    scroll-snap-align: start;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20 shadow-lg;
+  }
+  
+  .glass-card {
+    @apply glass rounded-xl;
+  }
+  
+  .glass-panel {
+    @apply glass backdrop-blur-lg bg-white/5;
+  }
+
+  .bg-animated-mesh {
+    background: radial-gradient(ellipse at center, #0f172a, #020617);
+    background-size: 400% 400%;
+    animation: meshMove 20s ease infinite;
+  }
+}
+
+@keyframes meshMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
