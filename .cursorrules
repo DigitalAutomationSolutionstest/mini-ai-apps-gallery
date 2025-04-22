@@ -1,0 +1,55 @@
+🛠️ RESET E AGGIORNAMENTO
+
+➡️ Da ora in poi, accetta le modifiche ai componenti esistenti (come Hero.tsx, Navbar.tsx, SectionServices.tsx ecc.) sovrascrivendoli completamente con il nuovo codice che ti fornirò.
+
+➡️ Applica esattamente tutti gli stili, layout e interazioni indicati.
+
+➡️ Rimuovi tutte le emoji ancora presenti e sostituiscile con Heroicons coerenti con il tema.
+
+➡️ Unifica tutto il layout con sfondo scuro #0a0a0a e testo ben leggibile.
+
+➡️ Non conservare versioni precedenti dei file.
+
+➡️ Se ci sono conflitti, rimuovi il contenuto e applica quello nuovo in modo integrale.
+
+➡️ Dopo ogni modifica, ricompila tutto e mostra l'anteprima aggiornata su `localhost`.
+
+🔧 Regole Cursor per mantenere tutto stabile e funzionante:
+
+1. Prima di applicare qualsiasi modifica, verifica se i componenti esistono già. NON duplicare file come `SectionPricing(1)` o `QuoteFormModal(1)`.
+
+2. Mantieni consistenza nei nomi dei file e import. Tutti i componenti devono essere `PascalCase.tsx` e i percorsi devono usare `@/components/...`.
+
+3. Se viene usato <Transition /> (da @headlessui/react), assicurati SEMPRE che abbia il prop obbligatorio `show={isOpen}`.
+
+4. NON creare uno useState all’interno del componente `QuoteFormModal`. Lo stato dev’essere gestito dal genitore (`SectionCustomQuote`) e passato come `isOpen` e `setIsOpen`.
+
+5. Prima di lanciare il run dev, fai una build di test locale:
+   - `rm -rf .next && npm run build` (oppure pnpm/yarn)
+   - Se la build è OK, allora procedi con `npm run dev`
+
+6. Non modificare contemporaneamente layout, animazioni e stato. Procedi per step: prima UI, poi animazioni, poi stato, poi API.
+
+7. Se un componente non viene trovato (`Module not found`), verifica prima se il file è stato cancellato o spostato, poi correggi gli import.
+
+8. NON modificare componenti funzionanti se non c'è un motivo preciso. Tutti i fix devono essere motivati.
+
+9. Rimuovi eventuali versioni duplicate di file tipo `SectionPricing(1).tsx`, `SectionQuote(1).tsx`, ecc. Lascia solo l’originale.
+
+10. Evita il caching di React/Next. In caso di dubbi:
+    - `npm install`
+    - `rm -rf .next`
+    - `npm run dev`
+IMPORTANTE: Segui queste regole con attenzione e precisione.
+
+1. NON sovrascrivere componenti funzionanti se non richiesto esplicitamente.
+2. NON eliminare o modificare hook (useState, useEffect, ecc.) già funzionanti.
+3. VERIFICA sempre la presenza dei props richiesti dai componenti, in particolare `show={}` nei <Transition />.
+4. Se un modulo non viene trovato (es. SectionQuote), NON cancellarlo ma chiedi se va ricreato.
+5. NON duplicare i file (es. SectionPricing(1).tsx), ma mantenere una sola versione aggiornata e funzionante.
+6. EVITA di modificare in automatico i layout, global.css o altri file base, se non richiesto esplicitamente.
+7. Se trovi errori di import/export (es. `Can't resolve`), correggi il percorso relativo e verifica che il file esista.
+8. Al termine di ogni modifica, esegui un check generale e conferma che non ci siano errori in console.
+9. NON introdurre nuovi componenti (es. animazioni, modali o hero) se non richiesto direttamente.
+10. In caso di problemi con headlessui, verifica sempre che ogni <Transition /> abbia `show={isOpen}` e che `isOpen` venga passato correttamente.
+

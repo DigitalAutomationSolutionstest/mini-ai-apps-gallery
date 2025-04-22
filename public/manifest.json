@@ -1,0 +1,40 @@
+{
+  "name": "Mini AI Apps Gallery",
+  "short_name": "Mini AI Apps",
+  "description": "Collection of specialized AI tools to supercharge your productivity",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/images/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/logo512.png", 
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Talent Scanner",
+      "short_name": "Scanner",
+      "description": "Analyze resumes and job descriptions",
+      "url": "/app/talent-scanner",
+      "icons": [{ "src": "/assets/images/talent-scanner-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Content Master",
+      "short_name": "Content",
+      "description": "Generate marketing content",
+      "url": "/app/content-master",
+      "icons": [{ "src": "/assets/images/content-master-icon.png", "sizes": "192x192" }]
+    }
+  ]
+}

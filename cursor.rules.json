@@ -1,0 +1,29 @@
+{
+  "exclude": [
+    "node_modules",
+    ".next",
+    "public",
+    "app",
+    "pages",
+    "components",
+    "styles",
+    "tailwind.config.ts",
+    "postcss.config.js",
+    "tsconfig.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "*.log"
+  ],
+  "watch": [
+    "api/**/*",
+    "utils/**/*",
+    "db/**/*"
+  ],
+  "entry": [
+    "api/quote.ts",
+    "api/send-email.ts",
+    "api/stripe/checkout-subscription.ts",
+    "api/stripe/webhook.ts"
+  ]
+}

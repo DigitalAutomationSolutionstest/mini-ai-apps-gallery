@@ -1,0 +1,117 @@
+// src/components/PricingPlans.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { RocketLaunchIcon } from '@heroicons/react/24/solid'
+
+export default function PricingPlans() {
+  const [plans, setPlans] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/stripe/prices')
+      .then((res) => res.json())
+      .then((data) => setPlans(data))
+  }, [])
+
+  const handleCheckout = async (priceId: string) => {
+    setLoading(true)
+    const res = await fetch('/api/stripe/checkout-subscription', {
+      method: 'POST',
+      body: JSON.stringify({ priceId }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    const data = await res.json()
+    if (data.url) window.location.href = data.url
+    setLoading(false)
+  }
+
+  return (
+    <section className="max-w-6xl mx-auto py-12 px-4">
+      <h2 className="text-3xl font-bold mb-6 text-white">Scegli il tuo piano</h2>
+      <div className="grid gap-6 md:grid-cols-3">
+        {plans.map((plan) => (
+          <div key={plan.id} className="bg-zinc-900 border border-zinc-700 p-6 rounded-lg shadow-lg flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+              <p className="text-4xl font-extrabold text-indigo-500">€{plan.price}<span className="text-base font-medium text-zinc-400"> / {plan.interval}</span></p>
+            </div>
+            <button
+              className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded w-full flex justify-center items-center gap-2"
+              onClick={() => handleCheckout(plan.id)}
+              disabled={loading}
+            >
+              <RocketLaunchIcon className="w-5 h-5" /> {loading ? 'Caricamento...' : 'Scegli questo piano'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+dist
+build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# supabase functions
+supabase/functions/_shared/env.ts
