@@ -26,12 +26,12 @@ const services = [
 
 export default function SectionServices() {
   return (
-    <section id="servizi" className="py-20 px-6 bg-zinc-900 text-white">
+    <section id="servizi" className="py-20 px-6 bg-[#0a0a0a] text-white">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-10">I Nostri Servizi</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {services.map((s, i) => (
-            <div key={i} className="bg-zinc-800 p-6 rounded-xl shadow-md hover:scale-105 transition">
+            <div key={i} className="bg-zinc-900/80 p-6 rounded-xl shadow-md hover:scale-105 transition border border-zinc-800">
               <div className="mb-4">{s.icon}</div>
               <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
               <p className="text-sm text-gray-300 mb-3">{s.description}</p>

@@ -1,91 +1,91 @@
-<<<<<<< HEAD
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MiniAI Backend
 
-## Getting Started
+API backend per Mini AI Hub
 
-First, run the development server:
+## Deploy
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Hosting: Vercel (https://api.miniaiapps.tech)
+- Stack: Next.js API Routes + Edge Functions
+
+## API Principali
+
+- `GET /api/debug` → Verifica stato dei servizi
+- `POST /api/quote` → Richiesta preventivo
+- `POST /api/stripe/checkout-subscription` → Abbonamento
+- `POST /api/ai/pdf` → Elaborazione PDF con AI
+- `POST /api/ai/image` → Generazione immagini con AI
+
+## Struttura del Progetto
+
+```
+/miniai-backend
+│
+├── app/
+│   └── api/
+│       └── debug/route.ts       # API verifica stato
+│       └── stripe/...           # Rotte API Stripe
+│       └── quote/...            # API preventivi
+│       └── ai/...               # API AI (PDF, Image)
+│
+├── lib/                         # Librerie utility
+│   └── stripe.ts                # Integrazione Stripe
+│   └── supabase.ts              # Integrazione Supabase
+│
+├── .env.example                 # Variabili da impostare
+├── vercel.json                  # Configurazione Vercel
+└── README.md                    # Documentazione
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variabili d'Ambiente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copia da `.env.example` e incolla nella sezione Environment Variables su Vercel.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 
-## Learn More
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-To learn more about Next.js, take a look at the following resources:
+# Resend
+RESEND_API_KEY=
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# AI
+OPENAI_API_KEY=
+HUGGINGFACE_API_KEY=
+ANTHROPIC_API_KEY=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Altro
+EMAIL_ADMIN=admin@miniaiapps.tech
+BASE_URL=https://miniaiapps.tech
+```
 
-## Deploy on Vercel
+## Sviluppo Locale
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Installa le dipendenze
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-# Mini AI Apps Gallery
+# Avvia il server di sviluppo
+npm run dev
 
-A collection of AI-powered mini applications built with React and integrated with various AI services.
+# Build per produzione
+npm run build
+```
 
-## Features
+## Deployment
 
-- AI Chat Assistant
-- Image Generation
-- Text Analysis
-- Real-time Collaboration
-- Responsive Design
-- Vercel Analytics Integration
+Il deployment è automatizzato tramite Vercel. Ogni push al branch `main` attiva un nuovo deployment.
 
-## Getting Started
+Per un deployment manuale:
 
-### Prerequisites
+```bash
+# Installa Vercel CLI
+npm i -g vercel
 
-- Node.js 16.x or later
-- pnpm 7.x or later
-
-### Installation
-
-1. Clone the repository:
-
-
-2. Install dependencies:
-
-
-3. Run the development server:
-
-
-4. Open [http://localhost:5173](http://localhost:5173) to view it in your browser.
-
-## Available Scripts
-
-- `pnpm run dev` - Start development server
-- `pnpm run build` - Build for production
-- `pnpm run preview` - Preview production build
-- `pnpm run lint` - Run ESLint
-
-## Technology Stack
-
-- React 18
-- Vite
-- Tailwind CSS
-- React Router
-- Vercel Analytics
-- Supabase
-- Anthropic API
-- Hugging Face API
-
-## Project Structure
->>>>>>> 365b77d50a1183e790f78776a0c2e9bc6262f9c8
+# Esegui il deployment
+vercel
+```

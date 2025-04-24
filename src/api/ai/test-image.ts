@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { API_URL } from '@/lib/env'
 
 // Configurazione hardcoded temporanea
 const SUPABASE_URL = 'https://nuvvezmucfeaswkmerbs.supabase.co';
@@ -55,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Test dell'API di generazione immagini
-    const response = await fetch('http://localhost:3000/api/ai/image', {
+    const response = await fetch(`${API_URL}/api/ai/image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

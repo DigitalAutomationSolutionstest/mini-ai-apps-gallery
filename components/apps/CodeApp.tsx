@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { CodeBracketIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import { API_URL } from '@/src/lib/env'
+import { supabase } from '@/src/lib/supabase'
 
 export function CodeApp() {
   const [query, setQuery] = useState("");
@@ -24,7 +26,7 @@ export function CodeApp() {
         setLoading(false);
         return;
       }
-      const res = await fetch("/api/ai/code", {
+      const res = await fetch(`${API_URL}/api/ai/code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

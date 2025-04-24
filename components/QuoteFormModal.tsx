@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, EnvelopeIcon, UserIcon, DocumentTextIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 
 export default function QuoteFormModal({
   isOpen,
@@ -23,7 +23,7 @@ export default function QuoteFormModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+          <div className="fixed inset-0 bg-black bg-opacity-70 transition-opacity" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -37,9 +37,9 @@ export default function QuoteFormModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-xl bg-white text-black p-6 shadow-xl transition-all w-full max-w-lg">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-xl bg-[#0a0a0a] text-white p-6 shadow-xl transition-all w-full max-w-lg border border-zinc-800">
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-black">
+                  <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
@@ -48,21 +48,31 @@ export default function QuoteFormModal({
                 </Dialog.Title>
                 <form className="space-y-4 text-left">
                   <div>
-                    <label className="block text-sm font-medium">Nome</label>
-                    <input type="text" className="w-full rounded border p-2" />
+                    <label className="block text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <UserIcon className="h-4 w-4" />
+                      Nome
+                    </label>
+                    <input type="text" className="w-full rounded bg-zinc-800 border border-zinc-700 p-2 text-white" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium">Email</label>
-                    <input type="email" className="w-full rounded border p-2" />
+                    <label className="block text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <EnvelopeIcon className="h-4 w-4" />
+                      Email
+                    </label>
+                    <input type="email" className="w-full rounded bg-zinc-800 border border-zinc-700 p-2 text-white" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium">Descrizione del progetto</label>
-                    <textarea rows={4} className="w-full rounded border p-2" />
+                    <label className="block text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <DocumentTextIcon className="h-4 w-4" />
+                      Descrizione del progetto
+                    </label>
+                    <textarea rows={4} className="w-full rounded bg-zinc-800 border border-zinc-700 p-2 text-white" />
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition"
+                    className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-2 rounded transition flex items-center justify-center gap-2"
                   >
+                    <PaperAirplaneIcon className="h-4 w-4" />
                     Invia richiesta
                   </button>
                 </form>

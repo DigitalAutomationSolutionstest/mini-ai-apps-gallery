@@ -5,48 +5,71 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { ENV } from "../_shared/env.ts";
 import { stripe } from "../_shared/stripe.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const sig = req.headers.get("Stripe-Signature")!;
-  const body = await req.text();
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  let event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      Deno.env.get("STRIPE_WEBHOOK_SECRET")!
-    );
-  } catch (err) {
-    console.error("Webhook error", err.message);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
-  }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-
-    const user_id = session.metadata?.user_id;
-    const credits = parseInt(session.metadata?.credits ?? "0");
-
-    if (user_id && credits) {
-      await supabase
-        .from("user_credits")
-        .update({ credits })
-        .eq("user_id", user_id);
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      throw new Error("No signature found");
     }
-  }
 
-  return new Response("ok", { status: 200 });
+    const body = await req.text();
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      ENV.STRIPE_WEBHOOK_SECRET
+    );
+
+    const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const userId = session.metadata.user_id;
+      const credits = parseInt(session.metadata.credits);
+
+      const { error } = await supabase
+        .from("users")
+        .update({ credits: credits })
+        .eq("id", userId);
+
+      if (error) throw error;
+    }
+
+    return new Response(
+      JSON.stringify({ received: true }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

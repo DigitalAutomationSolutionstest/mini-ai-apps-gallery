@@ -1,45 +1,27 @@
 {
   "version": 2,
-<<<<<<< HEAD
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "framework": "nextjs",
-  "regions": ["fra1"],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "OPENAI_API_KEY": "@openai_api_key",
-    "RESEND_API_KEY": "@resend_api_key",
-    "ADMIN_EMAIL": "@admin_email"
-  }
-} 
-=======
-  "buildCommand": "npm run build", 
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "react",
-  "regions": ["cdg1"],
-  "analyticsId": "enabled",
-  "public": true,
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "STRIPE_SECRET_KEY": "@stripe_secret_key",
+    "STRIPE_WEBHOOK_SECRET": "@stripe_webhook_secret",
+    "RESEND_API_KEY": "@resend_api_key",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "HUGGINGFACE_API_KEY": "@huggingface_api_key",
+    "ANTHROPIC_API_KEY": "@anthropic_api_key",
+    "EMAIL_ADMIN": "@email_admin",
+    "BASE_URL": "@base_url"
+  }
 }
->>>>>>> 3c6fc88cbce5ff78e3db61825bcd29eb05af3053

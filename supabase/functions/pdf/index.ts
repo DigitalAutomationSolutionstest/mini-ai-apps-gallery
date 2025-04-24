@@ -5,37 +5,90 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { OpenAI } from "npm:openai";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
+import { handleCors as utilsHandleCors, checkRateLimit, validateInput, handleError, initSupabase } from '../_shared/utils.ts';
+import { z } from 'npm:zod@3.22.4';
+import { logFunctionCall, logSuccess, logError } from '../_shared/logger.ts';
 
 console.log("Hello from Functions!")
 
+// Schema specifico per la funzione PDF
+const pdfRequestSchema = z.object({
+  userId: z.string().uuid(),
+  apiKey: z.string().min(1),
+  fileUrl: z.string().url(),
+  prompt: z.string().min(1).max(1000),
+});
+
 serve(async (req) => {
-  const { url } = await req.json();
+  const startTime = Date.now();
+  let logEntry;
 
-  const response = await fetch(url);
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  try {
+    // Gestione CORS
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
 
-  const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResponse = await checkRateLimit(ip);
+    if (rateLimitResponse) return rateLimitResponse;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      {
-        role: "system",
-        content: "Analizza il contenuto del PDF e fornisci un riassunto dettagliato e i punti chiave.",
-      },
-      {
-        role: "user",
-        content: `Ecco il contenuto del PDF in base64: ${base64}`,
-      },
-    ],
-  });
+    // Validazione input
+    const body = await req.json();
+    const { userId, apiKey, fileUrl, prompt } = validateInput(pdfRequestSchema, body);
 
-  return new Response(JSON.stringify({ result: completion.choices[0].message.content }));
+    // Log iniziale
+    logEntry = logFunctionCall('pdf', userId, {
+      fileUrl: fileUrl.substring(0, 50) + '...', // Log parziale dell'URL per privacy
+      promptLength: prompt.length,
+    });
+
+    // Inizializza Supabase
+    const supabase = initSupabase();
+
+    // Verifica crediti utente
+    const { data: credits, error: creditsError } = await supabase
+      .from('user_credits')
+      .select('credits')
+      .eq('user_id', userId)
+      .single();
+
+    if (creditsError || !credits || credits.credits < 1) {
+      const error = new Error('Insufficient credits');
+      logError(logEntry, error);
+      return new Response(JSON.stringify({
+        error: 'Insufficient credits',
+      }), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // TODO: Implementa la logica di elaborazione PDF qui
+    // Per ora restituiamo una risposta di esempio
+    const duration = Date.now() - startTime;
+    logSuccess(logEntry, duration);
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'PDF processed successfully',
+    }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    if (logEntry) {
+      logError(logEntry, error);
+    }
+    return handleError(error);
+  }
 });
 
 /* To invoke locally:

@@ -7,28 +7,59 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 console.log("Hello from Functions!")
 
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
 
 serve(async (req) => {
-  const { prompt } = await req.json();
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const response = await fetch("https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${ENV.HF_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ inputs: prompt }),
-  });
+  try {
+    const { prompt } = await req.json();
 
-  const blob = await response.blob();
-  const arrayBuffer = await blob.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const response = await fetch("https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ENV.HF_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs: prompt }),
+    });
 
-  return new Response(JSON.stringify({ image: `data:image/png;base64,${base64}` }), {
-    headers: { "Content-Type": "application/json" },
-  });
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+
+    const imageUrl = `data:image/png;base64,${base64}`;
+
+    return new Response(
+      JSON.stringify({ result: imageUrl }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

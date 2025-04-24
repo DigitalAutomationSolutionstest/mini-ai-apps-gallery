@@ -1,85 +1,93 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
+import { supabase } from '@/lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+interface PDFRequest {
+  pdfUrl: string;
+  userId: string;
+  questions?: string[];
+}
 
+/**
+ * API per elaborare PDF tramite AI
+ * POST /api/ai/pdf
+ */
 export async function POST(req: NextRequest) {
-  const { input } = await req.json();
-  const authHeader = headers().get("Authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser(token);
-
-  if (userError || !user) {
-    return NextResponse.json({ error: "Utente non trovato" }, { status: 401 });
-  }
-
-  // Controllo crediti
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("credits")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile || profile.credits < 1) {
-    return NextResponse.json({ error: "Crediti esauriti" }, { status: 403 });
-  }
-
-  // Chiamata a Claude via Anthropic
-  let output = null;
-  let json = null;
   try {
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: `Genera un report professionale in formato testo partendo dal seguente input:\n\n${input}`,
-          },
-        ],
-      }),
-    });
+    const body = await req.json() as PDFRequest;
+    const { pdfUrl, userId, questions } = body;
 
-    if (!claudeRes.ok) {
-      return NextResponse.json({ error: "Errore chiamata Anthropic" }, { status: 502 });
+    if (!pdfUrl || !userId) {
+      return NextResponse.json(
+        { success: false, message: 'URL del PDF e ID utente sono obbligatori' },
+        { status: 400 }
+      );
     }
 
-    json = await claudeRes.json();
-    console.log("Risposta Claude:", JSON.stringify(json, null, 2));
-    output = json?.content?.[0]?.text;
-  } catch (err) {
-    console.error("Errore fetch Anthropic:", err);
-    return NextResponse.json({ error: "Errore connessione AI" }, { status: 500 });
+    // Verificare se l'utente esiste e ha abbastanza crediti
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, credits')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Errore nel recupero dell\'utente:', userError);
+      return NextResponse.json(
+        { success: false, message: 'Utente non trovato' },
+        { status: 404 }
+      );
+    }
+
+    if (userData.credits < 1) {
+      return NextResponse.json(
+        { success: false, message: 'Crediti insufficienti per elaborare il PDF' },
+        { status: 403 }
+      );
+    }
+
+    // Logica per elaborare il PDF con AI
+    // Qui andrebbe implementata la chiamata a OpenAI o altra API di AI
+    
+    // Mock della risposta AI per dimostrazione
+    const aiResponses = questions 
+      ? questions.map(q => ({ question: q, answer: `Risposta simulata per: ${q}` }))
+      : [{ summary: 'Questo è un riassunto simulato del contenuto del PDF.' }];
+
+    // Registra l'utilizzo e scala i crediti
+    const { error: usageError } = await supabase
+      .from('ai_usage')
+      .insert({
+        user_id: userId,
+        feature: 'pdf',
+        credits_used: 1,
+        content_reference: pdfUrl,
+        created_at: new Date().toISOString(),
+      });
+
+    if (usageError) {
+      console.error('Errore nel salvataggio dell\'utilizzo:', usageError);
+    }
+
+    // Sottrai un credito all'utente
+    const { error: creditError } = await supabase
+      .from('users')
+      .update({ credits: userData.credits - 1 })
+      .eq('id', userId);
+
+    if (creditError) {
+      console.error('Errore nell\'aggiornamento dei crediti:', creditError);
+    }
+
+    return NextResponse.json({
+      success: true,
+      responses: aiResponses,
+      remainingCredits: userData.credits - 1,
+    });
+  } catch (error) {
+    console.error('Errore nell\'elaborazione del PDF:', error);
+    return NextResponse.json(
+      { success: false, message: 'Si è verificato un errore interno' },
+      { status: 500 }
+    );
   }
-
-  if (!output) {
-    return NextResponse.json({ error: "Errore nella generazione AI" }, { status: 500 });
-  }
-
-  // Deduzione credito
-  await supabase
-    .from("users")
-    .update({ credits: profile.credits - 1 })
-    .eq("id", user.id);
-
-  return NextResponse.json({ result: output, credits: profile.credits - 1 });
 } 

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { MicrophoneIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { API_URL } from '@/src/lib/env'
+import { supabase } from '@/src/lib/supabase'
 
 export function AudioApp() {
   const [file, setFile] = useState<File | null>(null);
@@ -28,7 +30,7 @@ export function AudioApp() {
         setLoading(false);
         return;
       }
-      const res = await fetch("/api/ai/audio", {
+      const res = await fetch(`${API_URL}/api/ai/audio`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

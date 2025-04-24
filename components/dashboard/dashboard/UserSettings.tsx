@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { API_URL } from '@/lib/env'
 
 export default function UserSettings() {
   const [portalUrl, setPortalUrl] = useState<string>("");
 
   const getCustomerPortal = async () => {
     const session = await supabase.auth.getSession();
-    const res = await fetch("https://nuvvezmucfeaswkmerbs.functions.supabase.co/customer-portal", {
+    const res = await fetch(`${API_URL}/api/stripe/customer-portal`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${session.data.session?.access_token}`,

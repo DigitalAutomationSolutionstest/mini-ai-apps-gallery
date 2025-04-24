@@ -5,30 +5,55 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const supabase = createClient(
-    ENV.SUPABASE_URL,
-    ENV.SUPABASE_SERVICE_ROLE_KEY
-  );
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const { user } = await supabase.auth.getUser(req);
-  if (!user) return new Response("Unauthorized", { status: 401 });
+  try {
+    const { userId } = await req.json();
 
-  const { data } = await supabase
-    .from("user_credits")
-    .select("credits")
-    .eq("user_id", user.id)
-    .single();
+    const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  return new Response(JSON.stringify({ credits: data?.credits ?? 0 }), {
-    headers: { "Content-Type": "application/json" },
-  });
+    const { data, error } = await supabase
+      .from("users")
+      .select("credits")
+      .eq("id", userId)
+      .single();
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ credits: data.credits }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

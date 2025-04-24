@@ -5,35 +5,74 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "npm:openai";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { OpenAI } from "npm:openai@4.28.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { ENV } from "../_shared/env.ts";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const { audioUrl } = await req.json();
-  const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY")! });
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const audioRes = await fetch(audioUrl);
-  const buffer = await audioRes.arrayBuffer();
-  const audioBlob = new Blob([new Uint8Array(buffer)]);
+  try {
+    const { audioUrl } = await req.json();
+    const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
 
-  const transcription = await openai.audio.transcriptions.create({
-    file: new File([audioBlob], "audio.mp3"),
-    model: "whisper-1",
-  });
+    const audioRes = await fetch(audioUrl);
+    const buffer = await audioRes.arrayBuffer();
+    const audioBlob = new Blob([new Uint8Array(buffer)]);
 
-  const summary = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      { role: "user", content: `Riassumi questo testo:\n${transcription.text}` },
-    ],
-  });
+    // Utilizziamo l'API di OpenAI per la trascrizione
+    const formData = new FormData();
+    formData.append("file", new File([audioBlob], "audio.mp3"));
+    formData.append("model", "whisper-1");
 
-  return new Response(
-    JSON.stringify({ transcript: transcription.text, summary: summary.choices[0].message.content }),
-    { headers: { "Content-Type": "application/json" } }
-  );
+    const transcriptionResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${ENV.OPENAI_API_KEY}`,
+      },
+      body: formData,
+    });
+
+    const transcriptionData = await transcriptionResponse.json();
+    const transcriptionText = transcriptionData.text;
+
+    const summary = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "user", content: `Riassumi questo testo:\n${transcriptionText}` },
+      ],
+    });
+
+    return new Response(
+      JSON.stringify({ transcript: transcriptionText, summary: summary.choices[0].message.content }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 })
 
 /* To invoke locally:

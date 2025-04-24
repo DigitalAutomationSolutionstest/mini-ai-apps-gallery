@@ -5,83 +5,56 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { ENV } from "../_shared/env.ts";
 import { stripe } from "../_shared/stripe.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const { user } = await supabase.auth.getUser(req);
-  if (!user) return new Response("Unauthorized", { status: 401 });
+  try {
+    const { userId, credits } = await req.json();
 
-  const body = await req.json();
-  const amount = body.amount ?? 5;
+    const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  let { data: userData } = await supabase
-    .from("stripe_user_subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", user.id)
-    .single();
+    const { data, error } = await supabase
+      .from("users")
+      .update({ credits: credits })
+      .eq("id", userId)
+      .select();
 
-  // Se l'utente non ha un customer_id, ne creiamo uno nuovo
-  if (!userData?.stripe_customer_id) {
-    // Crea un nuovo cliente Stripe
-    const customer = await stripe.customers.create({
-      email: user.email,
-      metadata: {
-        user_id: user.id,
-      },
-    });
+    if (error) throw error;
 
-    // Salva il customer_id nel database
-    const { error } = await supabase
-      .from("stripe_user_subscriptions")
-      .upsert({
-        user_id: user.id,
-        stripe_customer_id: customer.id,
-      });
-
-    if (error) {
-      console.error("Error saving customer:", error);
-      return new Response("Error creating customer", { status: 500 });
-    }
-
-    userData = { stripe_customer_id: customer.id };
+    return new Response(
+      JSON.stringify({ data }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
   }
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-    customer: userData.stripe_customer_id,
-    line_items: [
-      {
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: `Ricarica Crediti Mini AI Hub`,
-          },
-          unit_amount: amount * 100,
-        },
-        quantity: 1,
-      },
-    ],
-    success_url: Deno.env.get("SITE_URL") + "/dashboard?success=1",
-    cancel_url: Deno.env.get("SITE_URL") + "/dashboard?canceled=1",
-    metadata: {
-      user_id: user.id,
-      credits: amount * 10, // es. ogni 1€ = 10 crediti
-    },
-  });
-
-  return new Response(JSON.stringify({ url: session.url }), {
-    headers: { "Content-Type": "application/json" },
-  });
 });
 
 /* To invoke locally:

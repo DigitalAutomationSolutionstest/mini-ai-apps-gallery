@@ -2,12 +2,13 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { ArrowDownCircleIcon, SparklesIcon } from '@heroicons/react/24/outline'
 
 export default function Hero() {
   return (
-    <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+    <section className="min-h-screen flex items-center justify-center bg-[#0a0a0a] relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-fuchsia-900/20 to-black z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-fuchsia-900/20 to-[#0a0a0a] z-0"></div>
       
       {/* Animated background elements */}
       <div className="absolute inset-0 z-0">
@@ -44,14 +45,16 @@ export default function Hero() {
           >
             <Link 
               href="/#demo" 
-              className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-medium py-3 px-8 rounded-lg transition-colors"
+              className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-medium py-3 px-8 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
+              <SparklesIcon className="w-5 h-5" />
               Prova una Demo
             </Link>
             <Link 
               href="/#prezzi" 
-              className="bg-transparent border border-fuchsia-600 text-fuchsia-400 hover:bg-fuchsia-600/10 font-medium py-3 px-8 rounded-lg transition-colors"
+              className="bg-transparent border border-fuchsia-600 text-fuchsia-400 hover:bg-fuchsia-600/10 font-medium py-3 px-8 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
+              <ArrowDownCircleIcon className="w-5 h-5" />
               Scopri i Piani
             </Link>
           </motion.div>

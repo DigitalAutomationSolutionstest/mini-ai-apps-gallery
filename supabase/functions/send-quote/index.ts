@@ -5,50 +5,69 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const { name, email, message, budget } = await req.json();
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const supabase = createClient(
-    ENV.SUPABASE_URL,
-    ENV.SUPABASE_SERVICE_ROLE_KEY
-  );
+  try {
+    const { name, email, message } = await req.json();
 
-  await supabase.from("quotes").insert({
-    name,
-    email,
-    message,
-    budget,
-  });
+    // Invia l'email usando Resend
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${ENV.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Mini AI Hub <info@miniaihub.com>",
+        to: "info@miniaihub.com",
+        subject: "Nuova richiesta di preventivo",
+        html: `
+          <h2>Nuova richiesta di preventivo</h2>
+          <p><strong>Nome:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Messaggio:</strong> ${message}</p>
+        `,
+      }),
+    });
 
-  const resend = new Resend(ENV.RESEND_API_KEY);
+    if (!response.ok) {
+      throw new Error("Errore nell'invio dell'email");
+    }
 
-  await resend.emails.send({
-    from: "MiniAI <noreply@miniaiapps.tech>",
-    to: [email, "info@miniaiapps.tech"],
-    subject: "Richiesta preventivo MiniAI",
-    html: `
-      <h1>Grazie per il tuo interesse in MiniAI!</h1>
-      <p>Abbiamo ricevuto la tua richiesta di preventivo e ti risponderemo il prima possibile.</p>
-      <p>Dettagli della richiesta:</p>
-      <ul>
-        <li>Nome: ${name}</li>
-        <li>Email: ${email}</li>
-        <li>Budget: ${budget}</li>
-        <li>Messaggio: ${message}</li>
-      </ul>
-    `,
-  });
-
-  return new Response(JSON.stringify({ success: true }), {
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(
+      JSON.stringify({ success: true }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

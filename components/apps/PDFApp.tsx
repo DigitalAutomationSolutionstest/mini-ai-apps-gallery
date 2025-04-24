@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { DocumentTextIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { API_URL } from '@/src/lib/env'
+import { supabase } from '@/src/lib/supabase'
 
 export function PDFApp() {
   const [text, setText] = useState('')
@@ -23,7 +25,7 @@ export function PDFApp() {
         setIsGenerating(false)
         return
       }
-      const res = await fetch('/api/ai/pdf', {
+      const res = await fetch(`${API_URL}/api/ai/pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

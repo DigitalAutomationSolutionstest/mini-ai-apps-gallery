@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { PhotoIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/src/lib/supabase";
+import { generateImage } from "@/src/lib/api";
 
 const MODELS = [
   { label: "Stable Diffusion (HuggingFace)", value: "huggingface" },
@@ -26,48 +27,23 @@ export function ImageApp() {
     setError("");
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("Sessione attiva:", session);
       if (sessionError || !session) {
         setError("Utente non autenticato.");
-        setLoading(false);
         return;
       }
-      if (!session.access_token) {
-        setError("Utente non autenticato.");
-        setLoading(false);
-        return;
-      }
-      const token = session.access_token;
-      const apiRoute = model === "huggingface" ? "/api/ai/image" : "/api/ai/image-dalle";
-      console.log("[ImageApp] Chiamo API:", apiRoute);
-      const res = await fetch(apiRoute, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ prompt }),
+
+      const { data } = await generateImage({ 
+        prompt,
+        model: model as 'huggingface' | 'dalle'
       });
-      console.log("[ImageApp] Risposta HTTP:", res.status, res.statusText);
-      let data;
-      try {
-        data = await res.json();
-        console.log("[ImageApp] JSON restituito:", data);
-      } catch (jsonErr) {
-        console.error("[ImageApp] Errore parsing JSON:", jsonErr);
-        setError("Errore parsing risposta server");
-        setLoading(false);
-        return;
-      }
-      if (!res.ok) {
-        setError(data.error || "Errore generazione immagine");
-      } else {
-        setImageUrl(data.image);
-        if (typeof data.credits === "number") setCredits(data.credits);
+
+      setImageUrl(data.image);
+      if (typeof data.credits === "number") {
+        setCredits(data.credits);
       }
     } catch (err) {
       setError("Errore di rete o server");
-      console.error("[ImageApp] Errore generale:", err);
+      console.error("[ImageApp] Errore:", err);
     } finally {
       setLoading(false);
     }

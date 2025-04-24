@@ -1,35 +1,59 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { ENV } from "../_shared/env.ts";
 import { stripe } from "../_shared/stripe.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req) => {
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const { user } = await supabaseClient.auth.getUser(req);
+  try {
+    const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    const { user } = await supabase.auth.getUser(req);
+    if (!user) {
+      throw new Error("Unauthorized");
+    }
+
+    let { data: userData } = await supabase
+      .from("stripe_user_subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!userData?.stripe_customer_id) {
+      throw new Error("No customer found");
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: userData.stripe_customer_id,
+      return_url: ENV.SITE_URL + "/dashboard",
+    });
+
+    return new Response(
+      JSON.stringify({ url: session.url }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
   }
-
-  const { data: subscription } = await supabaseClient
-    .from("stripe_user_subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!subscription?.stripe_customer_id) {
-    return new Response(JSON.stringify({ error: "No customer found" }), { status: 400 });
-  }
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer: subscription.stripe_customer_id,
-    return_url: Deno.env.get("SITE_URL") + "/dashboard",
-  });
-
-  return new Response(JSON.stringify({ url: session.url }), {
-    headers: { "Content-Type": "application/json" },
-  });
 }); 

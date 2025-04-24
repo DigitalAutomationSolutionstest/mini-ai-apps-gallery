@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CurrencyEuroIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import CheckoutButton from './CheckoutButton'
+import { API_URL } from '@/lib/env'
 
 type Price = {
   id: string
@@ -26,7 +27,7 @@ export default function SectionPricing() {
       try {
         setIsLoading(true)
         setError('')
-        const res = await fetch('/api/stripe/prices')
+        const res = await fetch(`${API_URL}/api/stripe/prices`)
         if (!res.ok) throw new Error('Errore nel caricamento dei prezzi')
         const data = await res.json()
 

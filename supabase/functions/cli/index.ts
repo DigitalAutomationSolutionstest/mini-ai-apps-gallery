@@ -5,26 +5,56 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { OpenAI } from "npm:openai";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
 
 console.log("Hello from Functions!")
 
 serve(async (req) => {
-  const { command } = await req.json();
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
+  try {
+    const { command } = await req.json();
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      { role: "system", content: "Sei un assistente CLI. Aiuta con comandi shell, git, docker o bash." },
-      { role: "user", content: command },
-    ],
-  });
+    const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
 
-  return new Response(JSON.stringify({ result: completion.choices[0].message.content }));
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "Sei un assistente CLI. Aiuta con comandi shell, git, docker o bash." },
+        { role: "user", content: command },
+      ],
+    });
+
+    return new Response(
+      JSON.stringify({ result: completion.choices[0].message.content }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

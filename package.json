@@ -1,87 +1,33 @@
-<<<<<<< HEAD
 {
-  "name": "miniai-hub-backend",
+  "name": "project2",
   "version": "1.0.0",
-  "description": "Backend API for MiniAI Hub",
-  "main": "src/index.ts",
-  "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "jest"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "@supabase/supabase-js": "^2.39.7",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/micro": "^7.3.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "formidable": "^3.5.1",
-    "micro": "^10.0.1",
-    "next": "^14.1.0",
-    "openai": "^4.28.0",
-    "react-router-dom": "^7.5.1",
-    "stripe": "^18.0.0",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.3"
-  },
-  "devDependencies": {
-    "@types/formidable": "^3.4.5",
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.10.5",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1"
-  }
-}
-=======
-<<<<<<< HEAD
-{
-  "name": "mini-ai-app",
-  "version": "0.1.0",
-  "private": true,
+  "description": "",
+  "main": ".eslintrc.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DigitalAutomationSolutionstest/miniai-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DigitalAutomationSolutionstest/miniai-backend/issues"
+  },
+  "homepage": "https://github.com/DigitalAutomationSolutionstest/miniai-backend#readme",
   "dependencies": {
-    "@headlessui/react": "^1.7.17",
-    "@heroicons/react": "^2.2.0",
-    "@supabase/auth-helpers-react": "^0.5.0",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
-    "clsx": "^2.1.1",
-    "dotenv": "^16.5.0",
-    "framer-motion": "^11.18.2",
-    "next": "^14.2.28",
-    "openai": "^4.94.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.2.0",
-    "resend": "^4.2.0",
-    "stripe": "^18.0.0"
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.16",
-    "@types/react": "^18.3.20",
-    "@types/react-dom": "^18.2.18",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^15.3.0",
-    "eslint-plugin-react": "^7.37.5",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
+    "@types/node": "^20.11.24",
+    "@types/react": "^18.2.61",
     "typescript": "^5.3.3"
   }
 }
-=======
-## License
-
-MIT License - see LICENSE file for details
->>>>>>> 3c6fc88cbce5ff78e3db61825bcd29eb05af3053
->>>>>>> 365b77d50a1183e790f78776a0c2e9bc6262f9c8

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_URL } from '@/lib/env'
 
 interface CheckoutButtonProps {
   priceId: string
@@ -13,7 +14,7 @@ export default function CheckoutButton({ priceId }: CheckoutButtonProps) {
   const handleCheckout = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/stripe/checkout', {
+      const response = await fetch(`${API_URL}/api/stripe/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

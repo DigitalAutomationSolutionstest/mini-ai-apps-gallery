@@ -1,82 +1,116 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
+import { supabase } from "@/lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+interface ImageRequest {
+  prompt: string;
+  userId: string;
+  size?: string;
+  style?: string;
+}
 
+/**
+ * API per generare immagini tramite AI
+ * POST /api/ai/image
+ */
 export async function POST(req: NextRequest) {
-  const { prompt } = await req.json();
-  const authHeader = headers().get("Authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser(token);
-
-  if (userError || !user) {
-    return NextResponse.json({ error: "Utente non trovato" }, { status: 401 });
-  }
-
-  // Controllo crediti
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("credits")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile || profile.credits < 1) {
-    return NextResponse.json({ error: "Crediti esauriti" }, { status: 403 });
-  }
-
-  // Chiamata a HuggingFace (Stable Diffusion demo)
-  let imageUrl = null;
-  let json = null;
   try {
-    const hfRes = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inputs: prompt }),
+    const body = await req.json() as ImageRequest;
+    const { prompt, userId, size = '1024x1024', style = 'natural' } = body;
+
+    if (!prompt || !userId) {
+      return NextResponse.json(
+        { success: false, message: 'Prompt e ID utente sono obbligatori' },
+        { status: 400 }
+      );
+    }
+
+    // Verificare se l'utente esiste e ha abbastanza crediti
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, credits')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Errore nel recupero dell\'utente:', userError);
+      return NextResponse.json(
+        { success: false, message: 'Utente non trovato' },
+        { status: 404 }
+      );
+    }
+
+    const requiredCredits = 2; // La generazione di immagini richiede più crediti
+    
+    if (userData.credits < requiredCredits) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `Crediti insufficienti. Sono necessari ${requiredCredits} crediti per generare un'immagine.` 
+        },
+        { status: 403 }
+      );
+    }
+
+    // Logica per generare immagini con API OpenAI
+    // Qui andrebbe implementata la chiamata a OpenAI o altra API di AI
+    
+    // Mock della risposta per dimostrazione
+    const imageUrl = "https://placehold.co/600x400?text=Immagine+generata+AI";
+
+    // Registra l'utilizzo e scala i crediti
+    const { error: usageError } = await supabase
+      .from('ai_usage')
+      .insert({
+        user_id: userId,
+        feature: 'image',
+        credits_used: requiredCredits,
+        content_reference: prompt,
+        created_at: new Date().toISOString(),
+      });
+
+    if (usageError) {
+      console.error('Errore nel salvataggio dell\'utilizzo:', usageError);
+    }
+
+    // Sottrai i crediti all'utente
+    const { error: creditError } = await supabase
+      .from('users')
+      .update({ credits: userData.credits - requiredCredits })
+      .eq('id', userId);
+
+    if (creditError) {
+      console.error('Errore nell\'aggiornamento dei crediti:', creditError);
+    }
+
+    // Salva l'immagine generata nel database
+    const { data: imageData, error: imageError } = await supabase
+      .from('generated_images')
+      .insert({
+        user_id: userId,
+        prompt,
+        image_url: imageUrl,
+        size,
+        style,
+        created_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (imageError) {
+      console.error('Errore nel salvataggio dell\'immagine:', imageError);
+    }
+
+    return NextResponse.json({
+      success: true,
+      imageUrl,
+      imageId: imageData?.id,
+      remainingCredits: userData.credits - requiredCredits,
     });
-
-    if (!hfRes.ok) {
-      return NextResponse.json({ error: "Errore chiamata HuggingFace" }, { status: 502 });
-    }
-
-    // L'API può restituire direttamente un'immagine (blob) o un URL, qui simuliamo un URL
-    // In produzione, salva l'immagine su storage e restituisci l'URL
-    // Per demo:
-    json = await hfRes.json();
-    imageUrl = json?.url || null;
-    if (!imageUrl && Array.isArray(json)) {
-      // Alcuni modelli HuggingFace restituiscono [{ generated_image: "data:image/png;base64,..." }]
-      const base64 = json[0]?.generated_image;
-      if (base64) imageUrl = base64;
-    }
-  } catch (err) {
-    console.error("Errore fetch HuggingFace:", err);
-    return NextResponse.json({ error: "Errore connessione AI" }, { status: 500 });
+  } catch (error) {
+    console.error('Errore nella generazione dell\'immagine:', error);
+    return NextResponse.json(
+      { success: false, message: 'Si è verificato un errore interno' },
+      { status: 500 }
+    );
   }
-
-  if (!imageUrl) {
-    return NextResponse.json({ error: "Errore nella generazione immagine" }, { status: 500 });
-  }
-
-  // Deduzione credito
-  await supabase
-    .from("users")
-    .update({ credits: profile.credits - 1 })
-    .eq("id", user.id);
-
-  return NextResponse.json({ image: imageUrl, credits: profile.credits - 1 });
 } 

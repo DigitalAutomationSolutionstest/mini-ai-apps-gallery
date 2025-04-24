@@ -7,24 +7,54 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 console.log("Hello from Functions!")
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "npm:openai";
+// @deno-types="https://deno.land/x/types/deno.ns.d.ts"
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { ENV } from "../_shared/env.ts";
+import { OpenAI } from "npm:openai@4.28.0";
 
 serve(async (req) => {
-  const { prompt } = await req.json();
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-  const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
+  try {
+    const { code } = await req.json();
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      { role: "system", content: "Sei un esperto sviluppatore. Rispondi sempre in codice commentato." },
-      { role: "user", content: prompt },
-    ],
-  });
+    const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
 
-  return new Response(JSON.stringify({ result: completion.choices[0].message.content }));
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "Sei un assistente di programmazione. Aiuta con il codice, debug e best practices." },
+        { role: "user", content: code },
+      ],
+    });
+
+    return new Response(
+      JSON.stringify({ result: completion.choices[0].message.content }),
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
+  }
 });
 
 /* To invoke locally:

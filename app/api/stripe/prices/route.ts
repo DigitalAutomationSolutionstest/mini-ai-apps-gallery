@@ -1,34 +1,24 @@
-import Stripe from 'stripe'
-import { NextResponse } from 'next/server'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
-})
+import { stripe } from "@/src/lib/stripe";
+import { Stripe } from "stripe";
 
 export async function GET() {
   try {
-    const prices = await stripe.prices.list({
-      active: true,
-      expand: ['data.product'],
-    })
+    const products = await stripe.products.list({ active: true });
+    const prices = await stripe.prices.list({ active: true });
 
-    const formatted = prices.data.map((price) => {
-      const product = price.product as Stripe.Product
+    const enriched = prices.data.map((price: Stripe.Price) => {
+      const product = products.data.find((p: Stripe.Product) => p.id === price.product);
       return {
         id: price.id,
-        nickname: price.nickname || product.name || 'Piano',
-        unit_amount: price.unit_amount || 0,
-        product: {
-          name: product.name || 'Piano senza nome',
-          description: product.description || 'Nessuna descrizione disponibile',
-          category: product.metadata.category || 'Altro',
-        },
-      }
-    })
+        nickname: product?.name || "Piano",
+        price: price.unit_amount! / 100,
+        interval: price.recurring?.interval,
+      };
+    });
 
-    return NextResponse.json(formatted)
-  } catch (error) {
-    console.error('[STRIPE_GET_PRICES_ERROR]', error)
-    return new NextResponse('Failed to fetch prices', { status: 500 })
+    return new Response(JSON.stringify(enriched), { status: 200 });
+  } catch (err) {
+    console.error("[STRIPE_PRICES_ERROR]", err);
+    return new Response(JSON.stringify({ error: "Errore Stripe" }), { status: 500 });
   }
 }
