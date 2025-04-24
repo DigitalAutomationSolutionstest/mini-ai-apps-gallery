@@ -62,6 +62,7 @@ node_modules
 
 # next.js
 /.next/
+.next/
 /out/
 
 # production
@@ -81,6 +82,7 @@ yarn-error.log*
 .env*.local
 .env
 .env.*
+!.env.example
 supabase/functions/_shared/env.ts
 
 # vercel
@@ -99,12 +101,6 @@ supabase/functions/_shared/env.ts
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# IDE
-.idea
-.vscode
-*.swp
-*.swo
 
 # OS generated files
 .DS_Store

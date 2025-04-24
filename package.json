@@ -1,8 +1,8 @@
 {
-  "name": "project2",
+  "name": "miniai-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": ".eslintrc.js",
+  "description": "Backend API per Mini AI Hub",
+  "main": "app/api",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,22 +12,34 @@
     "type": "git",
     "url": "git+https://github.com/DigitalAutomationSolutionstest/miniai-backend.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["ai", "api", "nextjs", "backend"],
+  "author": "Digital Automation Solutions",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/DigitalAutomationSolutionstest/miniai-backend/issues"
   },
   "homepage": "https://github.com/DigitalAutomationSolutionstest/miniai-backend#readme",
   "dependencies": {
     "next": "^14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.39.5",
+    "stripe": "^12.0.0",
+    "resend": "^0.21.0",
+    "@heroicons/react": "^2.0.18",
+    "framer-motion": "^10.16.4",
+    "tailwindcss": "^3.3.0",
+    "zod": "^3.22.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",
     "@types/react": "^18.2.61",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
